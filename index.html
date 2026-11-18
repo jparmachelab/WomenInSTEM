@@ -139,24 +139,47 @@
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
     margin-top: 0.75rem;
+    align-items: start;
   }
   @media (max-width: 980px) {
     .filter-panels { grid-template-columns: 1fr; }
   }
-  .panel {
+  details.panel {
     background: var(--panel-surface);
     border: 1px solid var(--card-border);
     border-radius: 8px;
-    padding: 0.9rem 1.1rem;
+    padding: 0.75rem 1.1rem;
     box-shadow: 0 1px 3px var(--shadow-color);
   }
-  .panel-header {
+  summary.panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.65rem;
-    padding-bottom: 0.45rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+  summary.panel-header::-webkit-details-marker {
+    display: none;
+  }
+  details.panel[open] summary.panel-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.55rem;
     border-bottom: 1px solid var(--divider-color);
+  }
+  .panel-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .fold-caret {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--accent-blue);
+    transition: transform 0.18s ease;
+  }
+  details.panel[open] .fold-caret {
+    transform: rotate(90deg);
   }
   .panel-title {
     font-size: 0.9rem;
@@ -378,7 +401,7 @@
   }
 </style>
 </head>
-<body>
+<body class="light-mode">
 <header>
   <div class="header-top">
     <div>
@@ -386,9 +409,9 @@
       <p class="subtitle">Discoverers, Pioneer Theorists, Experimentalists &amp; Clinical Game Changers</p>
     </div>
     <div>
-      <button class="theme-toggle-btn" id="themeToggleBtn" type="button" onclick="toggleTheme()" title="Switch between Dark Mode and Light Mode">
-        <span id="themeToggleIcon">☀️</span>
-        <span id="themeToggleLabel">Switch to Light Mode</span>
+      <button class="theme-toggle-btn" id="themeToggleBtn" type="button" onclick="toggleTheme()" title="Switch between Light Mode and Dark Mode">
+        <span id="themeToggleIcon">🌙</span>
+        <span id="themeToggleLabel">Switch to Dark Mode</span>
       </button>
     </div>
   </div>
@@ -399,13 +422,16 @@
   </div>
 
   <div class="filter-panels">
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">1. GEOGRAPHY TREE (CONTINENT &rarr; COUNTRY). Default: All.</span>
-        <div style="display:flex; gap:0.4rem;">
-          <button class="btn btn-secondary" onclick="toggleAllContinents(false)">Clear Geography</button>
+    <details class="panel" id="geoPanel">
+      <summary class="panel-header">
+        <span class="panel-title-wrap">
+          <span class="fold-caret">&#9654;</span>
+          <span class="panel-title">1. GEOGRAPHY TREE (CONTINENT &rarr; COUNTRY). Default: All.</span>
+        </span>
+        <div style="display:flex; gap:0.4rem;" onclick="event.stopPropagation();">
+          <button class="btn btn-secondary" type="button" onclick="toggleAllContinents(false)">Clear Geography</button>
         </div>
-      </div>
+      </summary>
       <div class="mode-checks">
         <strong>Display / Filter By:</strong>
         <label><input type="radio" name="geoMode" id="modeBirth" value="birth" checked> Birthplace</label>
@@ -413,17 +439,20 @@
         <span style="color:var(--text-muted); font-size:0.78rem; margin-left:auto;">(Check a continent to reveal &amp; select its countries)</span>
       </div>
       <div class="geo-tree" id="geoTreeContainer"></div>
-    </div>
+    </details>
 
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">2. DISCIPLINES. Default: All.</span>
-        <div style="display:flex; gap:0.4rem;">
-          <button class="btn btn-secondary" onclick="toggleAllDisciplines(false)">Clear Disciplines</button>
+    <details class="panel" id="discPanel">
+      <summary class="panel-header">
+        <span class="panel-title-wrap">
+          <span class="fold-caret">&#9654;</span>
+          <span class="panel-title">2. GENERAL DISCIPLINES. Default: All.</span>
+        </span>
+        <div style="display:flex; gap:0.4rem;" onclick="event.stopPropagation();">
+          <button class="btn btn-secondary" type="button" onclick="toggleAllDisciplines(false)">Clear Disciplines</button>
         </div>
-      </div>
+      </summary>
       <div class="disc-grid" id="disciplineContainer"></div>
-    </div>
+    </details>
   </div>
 </header>
 
@@ -451,7 +480,7 @@
 <main class="grid" id="cardGrid"></main>
 
 <footer style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 3rem; padding-bottom: 2rem; border-top: 1px solid var(--card-border); padding-top: 1.5rem;">
-  <div>Armache Lab, Pennsylvania State University, Department of Biochemistry and Molecular Biology. <a href="https://www.armachelab.psu.edu" target="_blank" rel="noopener" style="color: var(--accent-blue); text-decoration: none;">https://www.armachelab.psu.edu</a>. Version 1.13</div>
+  <div>Armache Lab, Pennsylvania State University, Department of Biochemistry and Molecular Biology. <a href="https://www.armachelab.psu.edu" target="_blank" rel="noopener" style="color: var(--accent-blue); text-decoration: none;">https://www.armachelab.psu.edu</a>. Version 1.14</div>
   <div style="margin-top: 0.35rem;">Please contact us to let us know whom we should add. We are certain that we missed many incredible people</div>
 </footer>
 
@@ -514,13 +543,18 @@ function toggleTheme() {
   document.getElementById('themeToggleIcon').textContent = isLight ? '🌙' : '☀️';
   document.getElementById('themeToggleLabel').textContent = isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode';
   try {
-    localStorage.setItem('women_in_stem_theme', isLight ? 'light' : 'dark');
+    localStorage.setItem('women_in_stem_theme_v114', isLight ? 'light' : 'dark');
   } catch (e) {}
 }
 
 (function initSavedTheme() {
   try {
-    if (localStorage.getItem('women_in_stem_theme') === 'light') {
+    const saved = localStorage.getItem('women_in_stem_theme_v114');
+    if (saved === 'dark') {
+      document.body.classList.remove('light-mode');
+      document.getElementById('themeToggleIcon').textContent = '☀️';
+      document.getElementById('themeToggleLabel').textContent = 'Switch to Light Mode';
+    } else {
       document.body.classList.add('light-mode');
       document.getElementById('themeToggleIcon').textContent = '🌙';
       document.getElementById('themeToggleLabel').textContent = 'Switch to Dark Mode';
